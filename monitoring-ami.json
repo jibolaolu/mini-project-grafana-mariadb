@@ -1,0 +1,62 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "{{user `aws_access_key`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "region": "eu-west-2",
+      "source_ami": "ami-098828924dc89ea4a",
+      "instance_type": "t2.micro",
+      "ssh_username": "ec2-user",
+      "ami_name": "Monitor-ami{{timestamp}}",
+      "vpc_id": "vpc-6d33a105",
+      "subnet_id":  "subnet-7d4fef07",
+      "security_group_id": "sg-0a6903c594660b37a"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "script": "monitorutil.sh"
+    },
+    {
+      "type": "file",
+      "source": "./LinuxKeyPair.pem",
+      "destination": "~/"
+    },
+    {
+      "type":"shell",
+      "inline": [
+        "cat ~/LinuxKeyPair.pem >> /home/ec2-user/.ssh/authorized_keys"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": ["mkdir -p /home/ec2-user/prometheus/config"]
+    },
+    {
+      "type": "shell",
+      "inline": ["mkdir -p /home/ec2-user/blackbox/config"]
+    },
+    {
+      "type": "file",
+      "source": "prometheus.yml",
+      "destination": "/home/ec2-user/prometheus/config/prometheus.yml"
+    },
+    {
+      "type": "file",
+      "source": "blackbox.yml",
+      "destination": "/home/ec2-user/blackbox/config/blackbox.yml"
+    },
+    {
+      "type": "file",
+      "source":"docker-compose.yml",
+      "destination": "/home/ec2-user/"
+    }
+
+  ]
+}
